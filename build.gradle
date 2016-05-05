@@ -45,6 +45,8 @@ dependencies {
   testCompile "org.objenesis:objenesis:1.2"    // allows mocking of classes without default constructor (together with CGLIB)
   testCompile "org.codehaus.groovy.modules.http-builder:http-builder:0.7"
   testCompile 'ru.yandex.qatools.allure:allure-spock-0.7-adaptor:1.0'
+  //soap client
+  testCompile 'com.github.groovy-wslite:groovy-wslite:1.1.2'
   
   sysTestCompile sourceSets.main.output
   sysTestCompile configurations.testCompile

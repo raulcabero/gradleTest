@@ -1,17 +1,21 @@
 package com.softlayer.api.automation.systest.functional.vsi
+
 import groovy.json.JsonSlurper
 import groovyx.net.http.RESTClient
+import wslite.soap.*
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 import utility.InputProvider;
 import groovyx.net.http.ContentType
+import utility.Time;
 
-
+@Time
 class RestSpecification extends Specification {
 
 	
     RESTClient restClient = new RESTClient("https://api.softlayer.com/rest/v3.1/")
+	SOAPClient soapClient = new SOAPClient('https://api.softlayer.com/soap/v3.1/SoftLayer_Account')
 	
 	@Shared provider = new InputProvider()
 	
@@ -19,22 +23,40 @@ class RestSpecification extends Specification {
 		restClient.auth.basic "sl307608-rcabero", "9f123905f8121d6862ea64630a3bb586f7900be12346deec1341d3e91e745528"
 	} 
 	
-	
+	@Time
     def 'Chech getObject'() {
 
         when:
         def response = restClient.get(path:"SoftLayer_Account/getObject")
 		def response2 = restClient.get(path:"SoftLayer_Account/getHardware")
+		def user = "sl307608-rcabero"
+		def xml = """<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v3="http://api.service.softlayer.com/soap/v3/">
+  <soapenv:Header>
+    <authenticate xsi:type="v3:authenticate">
+      <username xsi:type="xsd:string">${user}</username>
+      <apiKey xsi:type="xsd:string">9f123905f8121d6862ea64630a3bb586f7900be12346deec1341d3e91e745528</apiKey>
+    </authenticate>
+  </soapenv:Header>
+  <soapenv:Body>
+    <v3:getHardware soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+  </soapenv:Body>
+</soapenv:Envelope>"""
+        
+
+		def responseSoap = soapClient.send(xml)
+
 
         then:
         response.status == 200
+		responseSoap.getHardwareResponse.getHardwareReturn.item[20].id == 438526
+		
 
 		and:
-        response.data.country == 'US2'
+        response.data.country == 'US'
 		response2.data[0].domain == 'open-test.ibmcloud.com'
         
     }
-
+/*
     //@Unroll("Check #city matches #expectedResult")
     def 'Check if we can find multiple cities'() {
 		println "[INFO] starting test Check if we can find multiple cities"
@@ -77,7 +99,7 @@ class RestSpecification extends Specification {
 		where: 'value #accountID'
 		[id, accountID, total] << provider.readCsv("test.csv")
 	}
-	/*
+	
 	@Unroll("Check post #json")
 	def 'Check post'() {
 		
